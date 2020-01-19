@@ -1,4 +1,4 @@
-use libc::{c_char, c_int, size_t, int64_t};
+use libc::{c_char, c_int, size_t};
 use std::ptr;
 
 #[derive(Debug)]
@@ -32,8 +32,8 @@ pub enum EarwaxContext {}
 
 #[repr(C)]
 pub struct EarwaxRational {
-    pub num: int64_t,
-    pub den: int64_t,
+    pub num: i64,
+    pub den: i64,
 }
 
 impl EarwaxRational {
@@ -46,8 +46,8 @@ impl EarwaxRational {
 pub struct EarwaxInfo {
     pub bitrate: c_int,
     pub sample_rate: c_int,
-    pub start_time: int64_t,
-    pub duration: int64_t,
+    pub start_time: i64,
+    pub duration: i64,
     pub time_base: EarwaxRational,
 }
 
@@ -67,7 +67,7 @@ impl EarwaxInfo {
 pub struct EarwaxChunk {
     pub data: *mut c_char,
     pub size: size_t,
-    pub time: int64_t,
+    pub time: i64,
 }
 
 impl EarwaxChunk {
@@ -93,7 +93,7 @@ extern "C" {
     pub fn earwax_drop(ctx: *mut *mut EarwaxContext);
     pub fn earwax_get_info(ctx: *const EarwaxContext, info: *mut EarwaxInfo);
     pub fn earwax_spit(ctx: *mut EarwaxContext, chunk: *mut EarwaxChunk) -> c_int;
-    pub fn earwax_seek(ctx: *mut EarwaxContext, pts: int64_t) -> c_int;
+    pub fn earwax_seek(ctx: *mut EarwaxContext, pts: i64) -> c_int;
 
     // Other ffmpeg functions.
     pub fn av_log_get_level() -> c_int;

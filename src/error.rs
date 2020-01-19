@@ -1,4 +1,4 @@
-use ffi::EarwaxErrorCode;
+use crate::ffi::EarwaxErrorCode;
 
 use std::error::Error as StdError;
 use std::ffi::NulError;
@@ -13,14 +13,7 @@ pub enum Error {
 }
 
 impl StdError for Error {
-    fn description(&self) -> &str {
-        match *self {
-            Error::Nul(ref e) => e.description(),
-            Error::FFI(_) => "FFI error.",
-        }
-    }
-
-    fn cause(&self) -> Option<&StdError> {
+    fn cause(&self) -> Option<&dyn StdError> {
         match *self {
             Error::Nul(ref e) => Some(e),
             _ => None,

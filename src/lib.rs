@@ -1,8 +1,3 @@
-#![feature(unique)]
-
-extern crate libc;
-extern crate num;
-
 pub mod error;
 pub mod ffi;
 pub mod log;
@@ -14,16 +9,14 @@ pub use timestamp::Timestamp;
 
 use num::rational::Rational64;
 
-use std::ffi::CString;
-use std::ptr;
-use std::ptr::Unique;
+use std::{ffi::CString, ptr, ptr::NonNull};
 
 /**
  * Earwax context. This struct contains the stream data
  * and main methods getting and seeking data.
  */
 pub struct Earwax {
-    earwax_context: Unique<ffi::EarwaxContext>,
+    earwax_context: NonNull<ffi::EarwaxContext>,
     info: Info,
 }
 
@@ -33,7 +26,7 @@ impl Earwax {
     /// Some(Earwax) if everything went fine.
     /// None if something went wrong with ffmpeg.
     pub fn new(url: &str) -> Result<Self> {
-        let url = try!(CString::new(url));
+        let url = (CString::new(url))?;
         let mut earwax_context = ptr::null_mut();
         unsafe {
             ffi::earwax_init();
@@ -43,7 +36,7 @@ impl Earwax {
                 ffi::earwax_get_info(earwax_context, &mut info);
                 let time_base = Rational64::new(info.time_base.num, info.time_base.den);
 
-                let context = match Unique::new(earwax_context) {
+                let context = match NonNull::new(earwax_context) {
                     Some(ctx) => ctx,
                     None =>
                         return Err(Error::FFI(ffi::EarwaxErrorCode::UnableToOpenDecoder))
