@@ -11,6 +11,7 @@ documentation = "https://docs.rs/earwax"
 repository = "https://github.com/danielrs/earwax"
 
 license-file = "./LICENSE"
+<<<<<<< HEAD
 edition = "2018"
 
 [dependencies]
@@ -26,3 +27,15 @@ cc = "1.0"
 [profile.release]
 lto = true
 codegen-units = 1
+=======
+
+[dependencies]
+libc = "0.2"
+num = "0.1"
+
+[dev-dependencies]
+ao_rs = "0.1.0"
+
+[build-dependencies]
+gcc = "0.3"
+>>>>>>> parent of 5d79726... Update dependencies, fix deprecation warnings
