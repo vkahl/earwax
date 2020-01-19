@@ -10,25 +10,16 @@ pub struct Timestamp {
 
 impl Timestamp {
     pub fn new(time_base: Rational64) -> Self {
-        Timestamp {
-            time_base: time_base,
-            pts: 0,
-        }
+        Timestamp { time_base, pts: 0 }
     }
 
     pub fn from_seconds(time_base: Rational64, seconds: i64) -> Self {
         let pts = seconds * time_base.denom() * time_base.numer();
-        Timestamp {
-            time_base: time_base,
-            pts: pts,
-        }
+        Timestamp { time_base, pts }
     }
 
     pub fn from_pts(time_base: Rational64, pts: i64) -> Self {
-        Timestamp {
-            time_base: time_base,
-            pts: pts,
-        }
+        Timestamp { time_base, pts }
     }
 
     pub fn seconds(&self) -> i64 {

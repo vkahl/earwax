@@ -1,9 +1,9 @@
-extern crate earwax;
 extern crate ao_rs as ao;
+extern crate earwax;
 
+use ao::*;
 use earwax::Earwax;
 use earwax::LogLevel;
-use ao::*;
 
 fn main() {
     let ao = Ao::new();

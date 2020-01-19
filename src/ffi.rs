@@ -36,31 +36,20 @@ pub struct EarwaxRational {
     pub den: i64,
 }
 
-impl EarwaxRational {
-    pub fn new() -> Self {
+impl Default for EarwaxRational {
+    fn default() -> Self {
         EarwaxRational { num: 1, den: 1 }
     }
 }
 
 #[repr(C)]
+#[derive(Default)]
 pub struct EarwaxInfo {
     pub bitrate: c_int,
     pub sample_rate: c_int,
     pub start_time: i64,
     pub duration: i64,
     pub time_base: EarwaxRational,
-}
-
-impl EarwaxInfo {
-    pub fn new() -> Self {
-        EarwaxInfo {
-            bitrate: 0,
-            sample_rate: 0,
-            start_time: 0,
-            duration: 0,
-            time_base: EarwaxRational::new(),
-        }
-    }
 }
 
 #[repr(C)]
@@ -70,8 +59,8 @@ pub struct EarwaxChunk {
     pub time: i64,
 }
 
-impl EarwaxChunk {
-    pub fn new() -> Self {
+impl Default for EarwaxChunk {
+    fn default() -> Self {
         EarwaxChunk {
             data: ptr::null_mut(),
             size: 0,
@@ -80,12 +69,12 @@ impl EarwaxChunk {
     }
 }
 
-#[link(name="earwax")]
-#[link(name="avcodec")]
-#[link(name="avformat")]
-#[link(name="swresample")]
-#[link(name="avutil")]
-#[link(name="pthread")]
+#[link(name = "earwax")]
+#[link(name = "avcodec")]
+#[link(name = "avformat")]
+#[link(name = "swresample")]
+#[link(name = "avutil")]
+#[link(name = "pthread")]
 extern "C" {
     pub fn earwax_init();
     pub fn earwax_shutdown();

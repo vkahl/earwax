@@ -32,26 +32,25 @@ impl Earwax {
             ffi::earwax_init();
             let res = ffi::earwax_new(&mut earwax_context, url.as_ptr());
             if res == 0 {
-                let mut info = ffi::EarwaxInfo::new();
+                let mut info = ffi::EarwaxInfo::default();
                 ffi::earwax_get_info(earwax_context, &mut info);
                 let time_base = Rational64::new(info.time_base.num, info.time_base.den);
 
                 let context = match NonNull::new(earwax_context) {
                     Some(ctx) => ctx,
-                    None =>
-                        return Err(Error::FFI(ffi::EarwaxErrorCode::UnableToOpenDecoder))
+                    None => return Err(Error::FFI(ffi::EarwaxErrorCode::UnableToOpenDecoder)),
                 };
 
                 Ok(Earwax {
-                       earwax_context: context,
-                       info: Info {
-                           bitrate: info.bitrate,
-                           sample_rate: info.sample_rate,
-                           start_time: Timestamp::from_pts(time_base, info.start_time),
-                           duration: Timestamp::from_pts(time_base, info.duration),
-                           time_base: time_base,
-                       },
-                   })
+                    earwax_context: context,
+                    info: Info {
+                        bitrate: info.bitrate,
+                        sample_rate: info.sample_rate,
+                        start_time: Timestamp::from_pts(time_base, info.start_time),
+                        duration: Timestamp::from_pts(time_base, info.duration),
+                        time_base,
+                    },
+                })
             } else {
                 Err(Error::FFI(res.into()))
             }
@@ -67,13 +66,13 @@ impl Earwax {
     /// the end of the stream was reached.
     pub fn spit(&mut self) -> Option<Chunk> {
         unsafe {
-            let mut chunk = ffi::EarwaxChunk::new();
+            let mut chunk = ffi::EarwaxChunk::default();
             if ffi::earwax_spit(self.earwax_context.as_mut(), &mut chunk) > 0 {
                 let slice = std::slice::from_raw_parts(chunk.data, chunk.size);
                 Some(Chunk {
-                         data: slice,
-                         time: Timestamp::from_pts(self.info().time_base, chunk.time),
-                     })
+                    data: slice,
+                    time: Timestamp::from_pts(self.info().time_base, chunk.time),
+                })
             } else {
                 None
             }
