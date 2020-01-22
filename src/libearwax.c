@@ -15,7 +15,12 @@
 // Useful functions / macros
 // --------
 
-#define DELETE(ptr) if (ptr != NULL) { free(ptr); ptr = NULL; }
+#define DELETE(ptr)  \
+    if (ptr != NULL) \
+    {                \
+        free(ptr);   \
+        ptr = NULL;  \
+    }
 
 // --------
 // Mutexes
@@ -40,7 +45,8 @@ int rc;
 /**
  * Errors for different earwax functions.
  */
-enum EarwaxError {
+enum EarwaxError
+{
     IO_ERROR = 100,
     AUDIO_STREAM_NOT_FOUND,
     DECODER_NOT_FOUND,
@@ -50,7 +56,8 @@ enum EarwaxError {
 /**
  * Type of rational numbers.
  */
-typedef struct {
+typedef struct
+{
     int64_t num;
     int64_t den;
 } EarwaxRational;
@@ -59,29 +66,31 @@ typedef struct {
  * Used for returning audio info
  * to the user.
  */
-typedef struct {
-    int bitrate; /**< In bytes, the bitrate of the audio. */
-    int sample_rate; /**< The rate of samples per-second. */
-    int64_t start_time; /**< Start time in time_base units. */
-    int64_t duration; /**< Duration in time_base units. */
+typedef struct
+{
+    int bitrate;              /**< In bytes, the bitrate of the audio. */
+    int sample_rate;          /**< The rate of samples per-second. */
+    int64_t start_time;       /**< Start time in time_base units. */
+    int64_t duration;         /**< Duration in time_base units. */
     EarwaxRational time_base; /**< Unit of time for this stream, wher 1/60 means 60 frames per second. */
 } EarwaxInfo;
 
 /**
  * Main container for an instance.
  */
-typedef struct {
+typedef struct
+{
     // General.
-    AVFormatContext* format_ctx;
-    AVCodecContext* codec_ctx;
+    AVFormatContext *format_ctx;
+    AVCodecContext *codec_ctx;
     int stream_index;
     // The following members are for decoding state. All of them usually contain
     // a value that represents the current decoded chunk, and not all the
     // decoded data.
-    SwrContext* swr;
+    SwrContext *swr;
     AVPacket packet;
-    AVFrame* frame;
-    uint8_t* buffer;
+    AVFrame *frame;
+    uint8_t *buffer;
     // Information for this audio.
     EarwaxInfo info;
 } EarwaxContext;
@@ -94,10 +103,11 @@ typedef struct {
  * 1. Signed integer of 16 bits.
  * 2. Interleaved to 2 channels (stereo).
  */
-typedef struct {
-    uint8_t* data; /**< Pointer to the decoded data. */
-    size_t size; /**< Size in bytes of the decoded data. */
-    int64_t time; /**< Time of chunks inside the stream in time_base units. */
+typedef struct
+{
+    uint8_t *data; /**< Pointer to the decoded data. */
+    size_t size;   /**< Size in bytes of the decoded data. */
+    int64_t time;  /**< Time of chunks inside the stream in time_base units. */
 } EarwaxChunk;
 
 // --------
@@ -114,26 +124,25 @@ void earwax_init();
  */
 void earwax_shutdown();
 
-
 /**
  * Creates a new EarwaxContext.
  * @param url url of the file to read from.
  * @return `0` on success. Any EarwaxError or AVERROR on error.
  */
-int earwax_new(EarwaxContext** ctx_ptr, const char* url);
+int earwax_new(EarwaxContext **ctx_ptr, const char *url);
 
 /**
  * Drops the given EarwaxContext context.
  * Does nothing if the passed pointer to
  * the context pointer is NULL.
  */
-void earwax_drop(EarwaxContext** ctx);
+void earwax_drop(EarwaxContext **ctx);
 
 /**
  * Reads information from the provided context and sets it
  * in the provided pointer.
  */
-void earwax_get_info(const EarwaxContext* ctx, EarwaxInfo* info);
+void earwax_get_info(const EarwaxContext *ctx, EarwaxInfo *info);
 
 /**
  * This function changes the pointer of data
@@ -141,13 +150,13 @@ void earwax_get_info(const EarwaxContext* ctx, EarwaxInfo* info);
  * is.
  * @returns the number of bytes in data.
  */
-int earwax_spit(EarwaxContext* ctx, EarwaxChunk* chunk);
+int earwax_spit(EarwaxContext *ctx, EarwaxChunk *chunk);
 
 /**
  * Moves the current position of the decoder to the given time (in time_base units).
  * Useful for rewinding or fast-forwarding.
  */
-int earwax_seek(EarwaxContext* ctx, int64_t pts);
+int earwax_seek(EarwaxContext *ctx, int64_t pts);
 
 // --------
 // Private API
@@ -157,44 +166,51 @@ int earwax_seek(EarwaxContext* ctx, int64_t pts);
  * Creates a chunk from the given frame in ctx.
  * @returns The size in bytes of the chunk data.
  */
-int next_chunk(EarwaxContext* ctx, EarwaxChunk* chunk);
+int next_chunk(EarwaxContext *ctx, EarwaxChunk *chunk);
 
 // --------
 // API Definition
 // --------
 
-void earwax_init() {
+void earwax_init()
+{
     pthread_mutex_lock(&rc_mutex);
-    if (rc <= 0) {
+    if (rc <= 0)
+    {
         av_register_all();
         avformat_network_init();
     }
     pthread_mutex_unlock(&rc_mutex);
 }
 
-void earwax_shutdown() {
+void earwax_shutdown()
+{
     pthread_mutex_lock(&rc_mutex);
-    if (rc <= 0) {
+    if (rc <= 0)
+    {
         avformat_network_deinit();
     }
     pthread_mutex_unlock(&rc_mutex);
 }
 
-int earwax_new(EarwaxContext** ctx_ptr, const char* url) {
+int earwax_new(EarwaxContext **ctx_ptr, const char *url)
+{
     pthread_mutex_lock(&rc_mutex);
     rc++;
 
     *ctx_ptr = calloc(1, sizeof(EarwaxContext));
-    EarwaxContext* ctx = *ctx_ptr;
+    EarwaxContext *ctx = *ctx_ptr;
 
     int ret_code = 0;
 
     // Format context and stream information.
-    if (avformat_open_input(&ctx->format_ctx, url, NULL, NULL) != 0) {
+    if (avformat_open_input(&ctx->format_ctx, url, NULL, NULL) != 0)
+    {
         ret_code = IO_ERROR;
         goto FAIL;
     }
-    if(avformat_find_stream_info(ctx->format_ctx, NULL) < 0) {
+    if (avformat_find_stream_info(ctx->format_ctx, NULL) < 0)
+    {
         ret_code = IO_ERROR;
         goto FAIL;
     }
@@ -203,26 +219,31 @@ int earwax_new(EarwaxContext** ctx_ptr, const char* url) {
     ctx->stream_index = -1;
     ctx->codec_ctx = avcodec_alloc_context3(NULL);
     unsigned int i;
-    for (i = 0; i < ctx->format_ctx->nb_streams; ++i) {
-        AVCodecContext* codec_ctx = ctx->format_ctx->streams[i]->codec;
-        if (codec_ctx->codec_type == AVMEDIA_TYPE_AUDIO) {
+    for (i = 0; i < ctx->format_ctx->nb_streams; ++i)
+    {
+        AVCodecContext *codec_ctx = ctx->format_ctx->streams[i]->codec;
+        if (codec_ctx->codec_type == AVMEDIA_TYPE_AUDIO)
+        {
             avcodec_copy_context(ctx->codec_ctx, codec_ctx);
             ctx->stream_index = i;
         }
     }
-    if (ctx->stream_index < 0) {
+    if (ctx->stream_index < 0)
+    {
         ret_code = AUDIO_STREAM_NOT_FOUND;
         goto FAIL;
     }
 
     // Codec loading.
-    AVCodec* codec;
+    AVCodec *codec;
     codec = avcodec_find_decoder(ctx->codec_ctx->codec_id);
-    if (codec == NULL) {
+    if (codec == NULL)
+    {
         ret_code = DECODER_NOT_FOUND;
         goto FAIL;
     }
-    if (avcodec_open2(ctx->codec_ctx, codec, NULL) < 0) {
+    if (avcodec_open2(ctx->codec_ctx, codec, NULL) < 0)
+    {
         ret_code = UNABLE_TO_OPEN_DECODER;
         goto FAIL;
     }
@@ -234,19 +255,16 @@ int earwax_new(EarwaxContext** ctx_ptr, const char* url) {
     av_opt_set_int(ctx->swr, "in_sample_rate", ctx->codec_ctx->sample_rate, 0);
     av_opt_set_int(ctx->swr, "out_sample_rate", ctx->codec_ctx->sample_rate, 0);
     av_opt_set_sample_fmt(ctx->swr, "in_sample_fmt", ctx->codec_ctx->sample_fmt, 0);
-    av_opt_set_sample_fmt(ctx->swr, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
+    av_opt_set_sample_fmt(ctx->swr, "out_sample_fmt", AV_SAMPLE_FMT_FLT, 0);
     swr_init(ctx->swr);
 
     // Frame space.
     ctx->frame = av_frame_alloc();
 
-    // Buffer for decoded chunks. Decoded PCM data is signed int of 16 bits, so we can
-    // multiply by either sizeof(int16_t) or sizeof(uint16_t).
+    // Buffer for decoded chunks. Decoded PCM data is float of 32 bits, so we can
+    // multiply by sizeof(float_t).
     ctx->buffer = malloc(
-        (ctx->codec_ctx->frame_size + AV_INPUT_BUFFER_PADDING_SIZE)
-        * ctx->codec_ctx->channels
-        * sizeof(uint16_t)
-    );
+        (ctx->codec_ctx->frame_size + AV_INPUT_BUFFER_PADDING_SIZE) * ctx->codec_ctx->channels * sizeof(float_t));
 
     // Sets information.
     earwax_get_info(ctx, &ctx->info);
@@ -254,20 +272,22 @@ int earwax_new(EarwaxContext** ctx_ptr, const char* url) {
     // Up to this point everything is right!
     goto SUCCESS;
 
-    FAIL:
-        pthread_mutex_unlock(&rc_mutex);
-        earwax_drop(ctx_ptr);
-        return ret_code;
-    SUCCESS:
-        pthread_mutex_unlock(&rc_mutex);
-        return 0;
+FAIL:
+    pthread_mutex_unlock(&rc_mutex);
+    earwax_drop(ctx_ptr);
+    return ret_code;
+SUCCESS:
+    pthread_mutex_unlock(&rc_mutex);
+    return 0;
 }
 
-void earwax_drop(EarwaxContext** ctx_ptr) {
+void earwax_drop(EarwaxContext **ctx_ptr)
+{
     pthread_mutex_lock(&rc_mutex);
     // Delete inner pointers.
-    if (*ctx_ptr != NULL) {
-        EarwaxContext* ctx = *ctx_ptr;
+    if (*ctx_ptr != NULL)
+    {
+        EarwaxContext *ctx = *ctx_ptr;
 
         DELETE(ctx->buffer);
         av_frame_unref(ctx->frame);
@@ -284,12 +304,14 @@ void earwax_drop(EarwaxContext** ctx_ptr) {
     pthread_mutex_unlock(&rc_mutex);
 }
 
-void earwax_get_info(const EarwaxContext* ctx, EarwaxInfo* info) {
+void earwax_get_info(const EarwaxContext *ctx, EarwaxInfo *info)
+{
     memset(info, 0, sizeof(EarwaxInfo));
 
     // Tries to find more meaningful values.
-    if (ctx != NULL) {
-        AVStream* stream = ctx->format_ctx->streams[ctx->stream_index];
+    if (ctx != NULL)
+    {
+        AVStream *stream = ctx->format_ctx->streams[ctx->stream_index];
 
         info->bitrate = ctx->codec_ctx->bit_rate;
         info->sample_rate = ctx->codec_ctx->sample_rate;
@@ -300,41 +322,51 @@ void earwax_get_info(const EarwaxContext* ctx, EarwaxInfo* info) {
     }
 }
 
-int earwax_spit(EarwaxContext* ctx, EarwaxChunk* chunk) {
-    if (ctx->packet.size > 0) {
+int earwax_spit(EarwaxContext *ctx, EarwaxChunk *chunk)
+{
+    if (ctx->packet.size > 0)
+    {
         int got_frame = 0;
-        int bytes =  avcodec_decode_audio4(ctx->codec_ctx, ctx->frame, &got_frame, &(ctx->packet));
+        int bytes = avcodec_decode_audio4(ctx->codec_ctx, ctx->frame, &got_frame, &(ctx->packet));
 
-        if (bytes > 0) {
+        if (bytes > 0)
+        {
             ctx->packet.size -= bytes;
             ctx->packet.data += bytes;
         }
 
-        if (got_frame) {
+        if (got_frame)
+        {
             // Next frame.
             return next_chunk(ctx, chunk);
         }
-        else if (ctx->packet.size > 0 && bytes > 0) {
+        else if (ctx->packet.size > 0 && bytes > 0)
+        {
             // Still processing the packet.
             return earwax_spit(ctx, chunk);
         }
-        else {
+        else
+        {
             // We are done with the packet.
             ctx->packet.size = 0;
             ctx->packet.data = NULL;
             return earwax_spit(ctx, chunk);
         }
     }
-    else {
+    else
+    {
         // Free packet and unrefs frame.
         av_frame_unref(ctx->frame);
         av_free_packet(&ctx->packet);
 
-        if (av_read_frame(ctx->format_ctx, &(ctx->packet)) == 0) {
-            if (ctx->packet.stream_index == ctx->stream_index) {
+        if (av_read_frame(ctx->format_ctx, &(ctx->packet)) == 0)
+        {
+            if (ctx->packet.stream_index == ctx->stream_index)
+            {
                 return earwax_spit(ctx, chunk);
             }
-            else {
+            else
+            {
                 // Drop unwanted package.
                 ctx->packet.size = 0;
                 ctx->packet.data = NULL;
@@ -346,17 +378,21 @@ int earwax_spit(EarwaxContext* ctx, EarwaxChunk* chunk) {
     return 0;
 }
 
-int earwax_seek(EarwaxContext* ctx, int64_t pts) {
+int earwax_seek(EarwaxContext *ctx, int64_t pts)
+{
     int64_t start_time = ctx->info.start_time;
     int64_t duration = ctx->info.duration;
 
-    if (pts < start_time) pts = start_time;
-    if (pts > duration) pts = duration;
+    if (pts < start_time)
+        pts = start_time;
+    if (pts > duration)
+        pts = duration;
 
     return av_seek_frame(ctx->format_ctx, ctx->stream_index, pts, AVSEEK_FLAG_BACKWARD);
 }
 
-void earwax_log_level(int level) {
+void earwax_log_level(int level)
+{
     av_log_set_level(level);
 }
 
@@ -364,16 +400,16 @@ void earwax_log_level(int level) {
 // Private API Definition
 // --------
 
-int next_chunk(EarwaxContext* ctx, EarwaxChunk* chunk) {
+int next_chunk(EarwaxContext *ctx, EarwaxChunk *chunk)
+{
     swr_convert(
         ctx->swr,
         &ctx->buffer, ctx->frame->nb_samples,
-        (const uint8_t**) ctx->frame->extended_data, ctx->frame->nb_samples
-    );
+        (const uint8_t **)ctx->frame->extended_data, ctx->frame->nb_samples);
 
-    // Each sample is two bytes (uint16_t), and we have n channels.
+    // Each sample is four bytes (float_t), and we have n channels.
     chunk->data = ctx->buffer;
-    chunk->size = ctx->frame->nb_samples * ctx->frame->channels * sizeof(uint16_t);
+    chunk->size = ctx->frame->nb_samples * ctx->frame->channels * sizeof(float_t);
     chunk->time = ctx->frame->pkt_pts;
 
     return chunk->size;

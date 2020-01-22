@@ -113,8 +113,7 @@ impl Drop for Earwax {
     }
 }
 
-/// A chunk represents a piece of decoded PCM data in 16-bit signed
-/// format.
+/// A chunk represents a piece of decoded PCM data in 32-bit float format.
 #[derive(Debug)]
 pub struct Chunk<'a> {
     pub data: &'a [i8],
